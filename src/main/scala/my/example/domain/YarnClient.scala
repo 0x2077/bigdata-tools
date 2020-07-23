@@ -53,7 +53,7 @@ case class YarnAppInfoResponse(
 case class YarnAppResponse(app: YarnAppInfoResponse)
 
 
-object YarnClient {
+class YarnClient extends Output{
   def getAppStat(args: Array[String]) = {
     val conf = new YarnClientConf(args)
 
@@ -80,14 +80,14 @@ object YarnClient {
       // The body will be a `Left(_)` in case of a non-2xx response, or a json
       // deserialization error. It will be `Right(_)` otherwise.
       response.body match {
-        case Left(error) => println(s"Error when executing request: $error")
+        case Left(error) => print(s"Error when executing request: $error")
         case Right(data) =>
           outputFormat match {
-            case "text" => println(s"Found Spark application: ${data.app.id}")
-              println(s"VCoreSeconds: ${data.app.vcoreSeconds}")
-              println(s"MBSeconds: ${data.app.memorySeconds}")
-              println(s"ElapsedTimeMs: ${data.app.elapsedTime}")
-            case "csv" => println(
+            case "text" => print(s"Found Spark application: ${data.app.id}")
+              print(s"VCoreSeconds: ${data.app.vcoreSeconds}")
+              print(s"MBSeconds: ${data.app.memorySeconds}")
+              print(s"ElapsedTimeMs: ${data.app.elapsedTime}")
+            case "csv" => print(
               Seq(data.app.vcoreSeconds, data.app.memorySeconds, data.app.elapsedTime)
                 .mkString(",")
             )
