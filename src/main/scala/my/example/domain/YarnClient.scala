@@ -59,6 +59,7 @@ object YarnClient {
 
     val baseUrl = conf.baseUrl.toOption.get
     val appId = conf.appId.toOption.get
+    val outputFormat = conf.outputFormat.toOption.get
 
     implicit val backend: SttpBackend[Future, Nothing, WebSocketHandler] = AsyncHttpClientFutureBackend()
 
@@ -81,10 +82,17 @@ object YarnClient {
       response.body match {
         case Left(error) => println(s"Error when executing request: $error")
         case Right(data) =>
-          println(s"Found Spark application: ${data.app.id}")
-          println(s"VCoreSeconds: ${data.app.vcoreSeconds}")
-          println(s"MBSeconds: ${data.app.memorySeconds}")
-          println(s"ElapsedTimeMs: ${data.app.elapsedTime}")
+          outputFormat match {
+            case "text" => println(s"Found Spark application: ${data.app.id}")
+              println(s"VCoreSeconds: ${data.app.vcoreSeconds}")
+              println(s"MBSeconds: ${data.app.memorySeconds}")
+              println(s"ElapsedTimeMs: ${data.app.elapsedTime}")
+            case "csv" => println(
+              Seq(data.app.vcoreSeconds, data.app.memorySeconds, data.app.elapsedTime)
+                .mkString(",")
+            )
+            case _ => throw new IllegalArgumentException(s"Format $outputFormat isn't supported.")
+          }
       }
     }
   }

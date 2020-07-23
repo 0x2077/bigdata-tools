@@ -11,4 +11,13 @@ class YarnClientTest extends FlatSpec with Matchers {
     )
     YarnClient.getAppStat(args)
   }
+
+  "yarnClient" should "get app stat from Yarn and format output as csv" in {
+    val args: Array[String] = Array(
+      "--app-id", "application_1581421691399_0001",
+      "--base-url", "http://localhost:8088",
+      "--output-format", "csv"
+    )
+    YarnClient.getAppStat(args)
+  }
 }
