@@ -1,16 +1,14 @@
 package my.example.domain
 
+import org.scalatest.concurrent.Eventually
 import org.scalatest.{FlatSpec, Matchers}
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
-class YarnClientTest extends FlatSpec with Matchers {
+class YarnClientTest extends FlatSpec with Matchers with Eventually {
 
   trait MockOutput extends Output {
     var messages: Seq[String] = Seq()
 
-    override def print(s: String) = {
+    override def print(s: String): Unit = {
       messages = messages :+ s
     }
   }
@@ -21,9 +19,11 @@ class YarnClientTest extends FlatSpec with Matchers {
       "--base-url", "http://localhost:8088"
     )
     val yc = new YarnClient with MockOutput
-    val res = yc.getAppStat(args)
-    Await.ready(res, 30.seconds)
-    yc.messages shouldBe List("Found Spark application: application_1581421691399_0001", "VCoreSeconds: 371", "MBSeconds: 631846", "ElapsedTimeMs: 129831")
+    yc.getAppStat(args)
+    eventually {
+      yc.messages shouldBe
+        List("Found Spark application: application_1581421691399_0001", "VCoreSeconds: 371", "MBSeconds: 631846", "ElapsedTimeMs: 129831")
+    }
   }
 
   "yarnClient" should "get app stat from Yarn and format output as csv" in {
@@ -33,8 +33,9 @@ class YarnClientTest extends FlatSpec with Matchers {
       "--output-format", "csv"
     )
     val yc = new YarnClient with MockOutput
-    val res = yc.getAppStat(args)
-    Await.ready(res, 30.seconds)
-    yc.messages shouldBe List("371,631846,129831")
+    yc.getAppStat(args)
+    eventually {
+      yc.messages shouldBe List("371,631846,129831")
+    }
   }
 }

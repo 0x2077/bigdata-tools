@@ -10,10 +10,9 @@ import sttp.client.circe._
 import io.circe.generic.auto._
 
 import sttp.client.asynchttpclient.WebSocketHandler
+import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
-import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
 import scala.concurrent.ExecutionContext.Implicits.global
 
 // Case classes corresponding to the json returned by Yarn (just the
@@ -54,7 +53,7 @@ case class YarnAppResponse(app: YarnAppInfoResponse)
 
 
 class YarnClient extends Output{
-  def getAppStat(args: Array[String]) = {
+  def getAppStat(args: Array[String]): Unit = {
     val conf = new YarnClientConf(args)
 
     val baseUrl = conf.baseUrl.toOption.get
@@ -74,7 +73,7 @@ class YarnClient extends Output{
     val resp: Future[Response[Either[ResponseError[io.circe.Error], YarnAppResponse]]] =
       request.response(asJson[YarnAppResponse]).send()
 
-    Await.ready(resp, 30.seconds)
+    Await.ready(resp, 15.seconds)
 
     resp.map { response =>
       // The body will be a `Left(_)` in case of a non-2xx response, or a json
@@ -95,5 +94,10 @@ class YarnClient extends Output{
           }
       }
     }
+
+    if (!resp.isCompleted) {
+      backend.close
+      throw new IllegalStateException("Unable to get information about the application")
+    } else backend.close
   }
 }
